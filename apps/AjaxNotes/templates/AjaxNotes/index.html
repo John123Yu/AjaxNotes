@@ -1,0 +1,86 @@
+<html>
+<head>
+	<title>Ajax Notes</title>
+	<script src="https://code.jquery.com/jquery-3.1.1.js" integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA=" crossorigin="anonymous"></script>
+</head>
+<style type="text/css">
+	.note {
+		background-color: lightyellow;
+		display: inline-block;
+		width: 200px;
+		height: 230px;
+		overflow: auto;
+	}
+</style>
+<body>
+	<h1>Ajax Notes</h1>
+	<div class = "allNotes">
+	{% for note in notes %}
+		<div class = "note" id = "{{note.id}}">
+			<br>
+			<form class = "editNoteForm" id = "form{{note.id}}">
+				{% csrf_token %}
+				<input name = "title" id = "title + {{note.id}}" type = "text" value = "{{note.title}}">
+				<br><br>
+				<textarea name = "content" id = "content + {{note.id}}" col = "25" rows = "8">{{note.content}}</textarea>
+				<input type = "hidden" name = "id" value = "{{note.id}}">
+			</form>
+			<form id = "deleteform{{note.id}}">
+				{% csrf_token %}
+				<input type = "hidden" name = "id" value = "{{note.id}}">
+				<input type = "submit" value = "Delete">
+			</form>
+		</div>
+	{% endfor %}
+	</div>
+	<form class = "addNoteAjax" action = "{%url 'AjaxNotes:addNote' %}" method = "post">
+		{% csrf_token %}
+		<input type = "text" name = "title"><br>
+		<textarea name = "content"></textarea><br>
+		<input class = "" type="submit" value="Add Note">
+	</form>
+
+</body>
+<script type="text/javascript">
+	{% for note in notes %}
+	$('#' + {{note.id}}).on('focusout', function() {
+		console.log("focusout")
+	    $.ajax({
+	      url: '/editNote',
+	      method: 'post',
+	      data: $('#form' + {{note.id}}).serialize(),
+	      success: function(serverResponse){
+	      	console.log(serverResponse)
+	      	$('#title' + serverResponse.id).val(serverResponse.title)
+	      	$('#content' + serverResponse.id).val(serverResponse.content)
+	      }
+	    })
+	    return false;
+	})
+	$('#deleteform' + {{note.id}}).submit( function() {
+		console.log('delete')
+	    $.ajax({
+	      url: '/deleteNote',
+	      method: 'post',
+	      data: $(this).serialize(),
+	      success: function(serverResponse){
+	      	$('.allNotes').html(serverResponse)
+	      }
+	    })
+	    return false;
+	})
+	{% endfor %}
+	$('.addNoteAjax').submit( function() {
+		console.log('submit')
+	    $.ajax({
+	      url: '/addNote',
+	      method: 'post',
+	      data: $(this).serialize(),
+	      success: function(serverResponse){
+	      	$('.allNotes').html(serverResponse)
+	      }
+	    })
+	    return false;
+	})
+</script>
+</html>
